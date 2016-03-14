@@ -2,47 +2,54 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections;
 using System.Threading.Tasks;
 
 namespace ovsTakt
 {
     class Test
     {
-        List<string> lstSource = new List<string>();
+        //List<string> lstSource = new List<string>();
+        ArrayList lstSource = new ArrayList();
         public List<int> lstInt = new List<int>();
 
-        public Test()
+        public Test(ArrayList TestInput)
         {
-            lstSource.Add("05A3"); //58C
-            lstSource.Add("0005");
-            lstSource.Add("F500");
-            lstSource.Add("F200");
-            lstSource.Add("358E");//
-            lstSource.Add("458D");
-            lstSource.Add("F400");
-            lstSource.Add("F800");
-            lstSource.Add("3009");//
-            lstSource.Add("F200");
-            lstSource.Add("458C");
-            lstSource.Add("300A");
-            lstSource.Add("F200");
-            lstSource.Add("480A");
+            // lstSource.Add("05A3"); //58C
+            // lstSource.Add("0005");
+            // lstSource.Add("F500");
+            // lstSource.Add("F200");
+            // lstSource.Add("358E");//
+            // lstSource.Add("458D");
+            // lstSource.Add("F400");
+            // lstSource.Add("F800");
+            // lstSource.Add("3009");//
+            // lstSource.Add("F200");
+            // lstSource.Add("458C");
+            // lstSource.Add("300A");
+            // lstSource.Add("F200");
+            // lstSource.Add("480A");
 
-            lstSource.Add("F700");//
-            lstSource.Add("F200");
-            lstSource.Add("F400");
-            lstSource.Add("158E");
-            lstSource.Add("F600");//
-            lstSource.Add("358E");
-            lstSource.Add("0009");
-            lstSource.Add("C598");
-            lstSource.Add("F000");//
-            lstSource.Add("B59E");
-            lstSource.Add("E101");
-            lstSource.Add("E301");
-            lstSource.Add("F800");
-            lstSource.Add("A593");
+            // lstSource.Add("F700");//
+            // lstSource.Add("F200");
+            // lstSource.Add("F400");
+            // lstSource.Add("158E");
+            // lstSource.Add("F600");//
+            // lstSource.Add("358E");
+            // lstSource.Add("0009");
+            // lstSource.Add("C598");
+            // lstSource.Add("F000");//
+            // lstSource.Add("B59E");
+            // lstSource.Add("E101");
+            // lstSource.Add("E301");
+            // lstSource.Add("F800");
+            // lstSource.Add("A593");
 
+            // lstSource.Add("F200");
+            // lstSource.Add("");
+            // lstSource.Add("F000");
+
+            lstSource = TestInput;
             GetIntList();
         }
 
@@ -50,16 +57,17 @@ namespace ovsTakt
         {
             for (int i = 0; i < lstSource.Count; i++)
             {
-                lstInt.Add(HexIntParse(lstSource[i]));
+                lstInt.Add(HexIntParse((string)lstSource[i]));
             }
 
         }
 
-        int HexIntParse(string str)
+        public int HexIntParse(string str)
         {
+            Console.WriteLine(str);
             int res = 0;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < str.Length; i++)
             {
                 res *= 16;
 

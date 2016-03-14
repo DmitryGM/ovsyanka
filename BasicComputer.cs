@@ -48,8 +48,7 @@ namespace ovsTakt
 
         public void StartComputer(int PC)
         {
-            this.PC = PC;
-
+            this.PC = PC;            
             StartComputer();
         }
 
@@ -67,14 +66,14 @@ namespace ovsTakt
             }
         }
 
-        public string GetHex(int k, int N)
+        public string GetHex(int LengthOfInt, int IntToConvert)
         {
             string res = "";
 
-            for (int i = 0; i < k; i++)
+            for (int i = 0; i < LengthOfInt; i++)
             {
-                int t = N % 16;
-                N /= 16;
+                int t = IntToConvert % 16;
+                IntToConvert /= 16;
 
                 if(t < 10) res += t;
 
@@ -122,9 +121,9 @@ namespace ovsTakt
 
             string resRev = "";
 
-            for (int i = 0; i < k; i++) //Переворот (реверс) строки
+            for (int i = 0; i < LengthOfInt; i++) //Переворот (реверс) строки
             {
-                resRev += res[k - 1 - i];
+                resRev += res[LengthOfInt - 1 - i];
             }
 
             return resRev;
@@ -558,10 +557,11 @@ namespace ovsTakt
         void CMC()
         {
             //Инверсия бита C //7E
-            if (C == 0)
-                C = 1;
-            else
-                C = 0;
+            // if (C == 0)
+            //     C = 1;
+            // else
+            //     C = 0;
+            C = C ^ 1;
         }
 
         void ROL()
@@ -575,7 +575,8 @@ namespace ovsTakt
 
         void ROR()
         {
-            BR = (int)(A >> 1); //85
+            BR = (int)(A >> 1); //85 +V Зачем здесь конверсия в (int) стоит? разве A не интовый?
+            // int A;  //accumulator
             BR += (1 << 16) * Bit(0, A);
             BR %= (int)(1 << 17);
 
