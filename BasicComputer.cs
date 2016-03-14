@@ -78,12 +78,46 @@ namespace ovsTakt
 
                 if(t < 10) res += t;
 
-                if(t == 10) res += "A";
-                if(t == 11) res += "B";
-                if(t == 12) res += "C";
-                if(t == 13) res += "D";
-                if(t == 14) res += "E";
-                if(t == 15) res += "F";
+                switch(t)
+                {
+                    case 10:
+                    {
+                        res += "A";
+                        break;
+                    }
+                    case 11:
+                    {
+                        res += "B";
+                        break;
+                    }
+                    case 12:
+                    {
+                        res += "C";
+                        break;
+                    }
+                    case 13:
+                    {
+                        res += "D";
+                        break;
+                    }
+                    case 14:
+                    {
+                        res += "E";
+                        break;
+                    }
+                    case 15:
+                    {
+                        res += "F";
+                        break;
+                    }
+
+                }
+                // if(t == 10) res += "A";
+                // if(t == 11) res += "B";
+                // if(t == 12) res += "C";
+                // if(t == 13) res += "D";
+                // if(t == 14) res += "E";
+                // if(t == 15) res += "F";
             }
 
             string resRev = "";
