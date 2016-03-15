@@ -12,8 +12,12 @@ namespace ovsTakt
     {
         static void Main(string[] args)
         {
-            BasicComputer bc = new BasicComputer();
-            ArrayList TestInput = new ArrayList();
+            BasicComputer bc     = new BasicComputer();
+
+            int MemoryOffset     = 0;
+            int WriteAddr        = 0x000;
+            int StartAtAdress    = 0x000;
+
 
             // Open the file to read from.
             string path = @"/Users/vsafonov/Documents/Progs/Dmitry/ovsyanka/TestAssembly";
@@ -22,73 +26,82 @@ namespace ovsTakt
                 string s = "";
                 while ((s = sr.ReadLine()) != null)
                 {
-                    Console.WriteLine(s);
-                    Assembler(ref TestInput,s);
+                    AssembleAndLoad(s, ref bc,ref WriteAddr,ref MemoryOffset);
                 }
             }
             
-            Test test = new Test(TestInput);
-            int StartAtAdress = test.HexIntParse("200");
+            
+            
+            
 
             Console.ReadLine();
-
-            for (int i = 0; i < test.lstInt.Count; i++)
-            {
+                        // for (int i = 0; i < test.lstInt.Count; i++)
+            // {
                 
-                bc.Memory[i + StartAtAdress] = test.lstInt[i];
+                
+            //     //Console.WriteLine(bc.getHex(4, test.lstInt[i]));
 
-                //Console.WriteLine(bc.getHex(4, test.lstInt[i]));
-            }
+            // }
 
             bc.StartComputer(StartAtAdress);
         }
 
 
-        // TODO: Does not work with non-direct adressing 
-        private static void Assembler(ref ArrayList list, string input)
+        // FIXME: Does not work with non-direct adressing 
+        private static void AssembleAndLoad(string input, ref BasicComputer BasicComp_ref,ref int WriteAtAddr,ref int MemOffset)
         {
 
-            int i = 0;
-            string Word ="";
-            string Addr ="";
+            int i         = 0;
+            string Word   ="";
+            string Addr   ="";
 
 
+            while(input[i] != ' ')
+            {
+                Console.WriteLine("DEBUG i:{0}",i);
+                Word = Word + input[i];
+                i++;
+                if(i == input.Length)
+                    break;
 
-                while(input[i] != ' ')
+            }
+            i++;
+            while(i < input.Length)
+            {
+                Console.WriteLine("DEBUG i:{0}",i);
+                Addr = Addr + input[i];
+                i++;
+            }
+            Console.WriteLine("DEBUG Word,Addr:{0};{1}",Word, Addr);
+
+        
+            switch(Word)
+            {
+                case "CLA":
                 {
-                    Console.WriteLine("DEBUG i:{0}",i);
-                    Word = Word + input[i];
-                    i++;
-                    if(i == input.Length)
-                        break;
+                    LoadTest.LoadHexCode("F200",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
                 }
-                while(i != input.Length)
+                case "ADD":
                 {
-                    Console.WriteLine("DEBUG i:{0}",i);
-                    Addr = Addr + input[i];
-                    i++;
+                    LoadTest.LoadHexCode("8" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
                 }
-                Console.WriteLine("DEBUG Word,Addr:{0};{1}",Word, Addr);
-
-
-                switch(Word)
+                case "HLT":
                 {
-                    case "CLA":
-                    {
-                        list.Add("F200");
-                        break;
-                    }
-                    case "ADD":
-                    {
-                        list.Add("8" + Addr);
-                        break;
-                    }
-                    case "HLT":
-                    {
-                        list.Add("F000");
-                        break;
-                    }
+                    LoadTest.LoadHexCode("F000",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
                 }
+                case "ORG":
+                {
+                    MemOffset = 0;
+                    WriteAtAddr = LoadTest.HexIntParse(Addr);
+                    break;
+                }
+            }
 
 
             // while(list[i] != ',')
