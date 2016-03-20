@@ -48,7 +48,8 @@ namespace ovsTakt
 
         public void StartComputer(int PC)
         {
-            this.PC = PC;            
+            this.PC = PC;
+
             StartComputer();
         }
 
@@ -61,74 +62,39 @@ namespace ovsTakt
                 //Можно посмотреть, что получилось 
 
                 Console.WriteLine("PC: " + GetHex(3, PC) + "\t\tRA: " + GetHex(3, RA) + "\t\tRC: " + GetHex(4, RC) + "\tRD: " + GetHex(4, RD) + "\tA: " + GetHex(4, A) + "\t\tC: " + C);
-                //Console.ReadLine();
+                //Console.ReadLine(); 
 
             }
         }
 
-        public string GetHex(int LengthOfInt, int IntToConvert)
+        public string GetHex(int k, int N)
         {
             string res = "";
 
-            for (int i = 0; i < LengthOfInt; i++)
+            for (int i = 0; i < k; i++)
             {
-                int t = IntToConvert % 16;
-                IntToConvert /= 16;
+                int t = N % 16;
+                N /= 16;
 
                 if(t < 10) res += t;
 
-                switch(t)
-                {
-                    case 10:
-                    {
-                        res += "A";
-                        break;
-                    }
-                    case 11:
-                    {
-                        res += "B";
-                        break;
-                    }
-                    case 12:
-                    {
-                        res += "C";
-                        break;
-                    }
-                    case 13:
-                    {
-                        res += "D";
-                        break;
-                    }
-                    case 14:
-                    {
-                        res += "E";
-                        break;
-                    }
-                    case 15:
-                    {
-                        res += "F";
-                        break;
-                    }
-
-                }
-                // if(t == 10) res += "A";
-                // if(t == 11) res += "B";
-                // if(t == 12) res += "C";
-                // if(t == 13) res += "D";
-                // if(t == 14) res += "E";
-                // if(t == 15) res += "F";
+                if(t == 10) res += "A";
+                if(t == 11) res += "B";
+                if(t == 12) res += "C";
+                if(t == 13) res += "D";
+                if(t == 14) res += "E";
+                if(t == 15) res += "F";
             }
 
             string resRev = "";
 
-            for (int i = 0; i < LengthOfInt; i++) //Переворот (реверс) строки
+            for (int i = 0; i < k; i++) //Переворот (реверс) строки
             {
-                resRev += res[LengthOfInt - 1 - i];
+                resRev += res[k - 1 - i];
             }
 
             return resRev;
         }
-
 
         //Цикл выборки команды + контракт
         void CycleInstructionFetch()
@@ -194,6 +160,7 @@ namespace ovsTakt
         }
 
         //Цикл исполнения адресных команд
+        //Предусловие: в RD лежит адрес операнда
         void CycleExecutionAddressInstruction()
         {
             //Декодирование адресных команд
@@ -304,7 +271,7 @@ namespace ovsTakt
                 }
             }
 
-            //Исполнение адресных команд
+            //Исполнение адресных команд (см. методы ниже)
         }
 
         void AND()
@@ -410,15 +377,17 @@ namespace ovsTakt
         void JSR()
         {
             BR = RD + 1; //57
-            BR %= (int)Math.Pow(2, 16); //Берем младшие 16 бит
+            BR %= (int)(1<<16); //Берем младшие 16 бит
 
-            RC = BR; //58
+            RC = BR; //58 (адрес следующей команды кладём в регистр команд (RC))
+
+            //Пишем адрес возврата
             BR = PC; //59
             RD = BR; //5A
+            Memory[RA] = RD; //5B
 
-            RD = Memory[RA]; //5B
+            //Пишем адрес следующей команды
             BR = RC;
-
             PC = BR; //5C
 
         }
@@ -516,7 +485,7 @@ namespace ovsTakt
         void DEC()
         {
             BR = A + COM(0); //70
-            BR %= (int)Math.Pow(2, 17); //Берем младшие 17 бит
+            BR %= (int)(1<<17); //Берем младшие 17 бит
 
             A = BR; //71
         }
@@ -524,7 +493,7 @@ namespace ovsTakt
         void INC()
         {
             BR = A + 1; //73
-            BR %= (int)Math.Pow(2, 17); //Берем младшие 17 бит
+            BR %= (int)(1<<17); //Берем младшие 17 бит
 
             A = BR; //74
         }
@@ -557,11 +526,10 @@ namespace ovsTakt
         void CMC()
         {
             //Инверсия бита C //7E
-            // if (C == 0)
-            //     C = 1;
-            // else
-            //     C = 0;
-            C = C ^ 1;
+            if (C == 0)
+                C = 1;
+            else
+                C = 0;
         }
 
         void ROL()
@@ -575,8 +543,7 @@ namespace ovsTakt
 
         void ROR()
         {
-            BR = (int)(A >> 1); //85 +V Зачем здесь конверсия в (int) стоит? разве A не интовый?
-            // int A;  //accumulator
+            BR = (int)(A >> 1); //85
             BR += (1 << 16) * Bit(0, A);
             BR %= (int)(1 << 17);
 
