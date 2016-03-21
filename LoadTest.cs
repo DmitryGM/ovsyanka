@@ -9,19 +9,19 @@ namespace ovsTakt
 {
     class LoadTest
     {
-        //List<string> lstSource = new List<string>();
-        //ArrayList lstSource = new ArrayList();
-        //public List<int> lstInt = new List<int>();
 
         static public void LoadHexCode(string TestInput, ref BasicComputer BasicComp_ref, int WriteAtAddr)
         {
-            
+            Console.WriteLine("DEBUG2: HEX - {0}, Addr - {1}",TestInput,WriteAtAddr);   
             BasicComp_ref.Memory[WriteAtAddr] = HexIntParse(TestInput);
 
         }
 
+        // FIXME: Нужно все ифы запихнуть в свитч
+        // или как-нибудь получше это записать, без ненужных сравнений.
         static public int HexIntParse(string str)
         {
+
             Console.WriteLine(str);
             int res = 0;
 

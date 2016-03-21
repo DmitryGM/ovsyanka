@@ -16,7 +16,7 @@ namespace ovsTakt
 
             int MemoryOffset     = 0;
             int WriteAddr        = 0x000;
-            int StartAtAdress    = 0x000;
+            int StartAtAdress    = 0x2BD;
 
 
             // Open the file to read from.
@@ -44,6 +44,7 @@ namespace ovsTakt
             // }
 
             bc.StartComputer(StartAtAdress);
+            Console.WriteLine("ANSWER: {0}" ,bc.Memory[LoadTest.HexIntParse("2D4")]);
         }
 
 
@@ -83,9 +84,21 @@ namespace ovsTakt
                     MemOffset++;
                     break;
                 }
+                case "INC":
+                {
+                    LoadTest.LoadHexCode("F800",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "BR":
+                {
+                    LoadTest.LoadHexCode("C" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
                 case "ADD":
                 {
-                    LoadTest.LoadHexCode("8" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    LoadTest.LoadHexCode("4" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
                     MemOffset++;
                     break;
                 }
@@ -95,26 +108,67 @@ namespace ovsTakt
                     MemOffset++;
                     break;
                 }
+                case "JSR":
+                {
+                    LoadTest.LoadHexCode("2" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
                 case "ORG":
                 {
                     MemOffset = 0;
                     WriteAtAddr = LoadTest.HexIntParse(Addr);
                     break;
                 }
+                case "WORD":
+                {
+                    LoadTest.LoadHexCode(Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "BMI":
+                {
+                    LoadTest.LoadHexCode("A" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "BPL":
+                {
+                    LoadTest.LoadHexCode("9" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "ROL":
+                {
+                    LoadTest.LoadHexCode("F600",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "CLC":
+                {
+                    LoadTest.LoadHexCode("F300",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "MOV":
+                {
+                    LoadTest.LoadHexCode("3" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "SUB":
+                {
+                    LoadTest.LoadHexCode("6" + Addr,ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
+                case "DEC":
+                {
+                    LoadTest.LoadHexCode("F900",ref BasicComp_ref, WriteAtAddr + MemOffset);
+                    MemOffset++;
+                    break;
+                }
             }
-
-
-            // while(list[i] != ',')
-            // {
-                
-            //     Word = Word + list[i];
-                
-            // }
-            // switch(Word)
-            // {
-            //     case 
-            // }
-
         
         }
     }
