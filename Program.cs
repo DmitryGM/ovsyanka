@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using System.Collections;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ovsTakt
 {
@@ -29,19 +24,8 @@ namespace ovsTakt
                     AssembleAndLoad(s, ref bc,ref WriteAddr,ref MemoryOffset);
                 }
             }
-            
-            
-            
-            
 
             Console.ReadLine();
-                        // for (int i = 0; i < test.lstInt.Count; i++)
-            // {
-                
-                
-            //     //Console.WriteLine(bc.getHex(4, test.lstInt[i]));
-
-            // }
 
             bc.StartComputer(StartAtAdress);
             Console.WriteLine("ANSWER: {0}" ,bc.Memory[LoadTest.HexIntParse("2D4")]);

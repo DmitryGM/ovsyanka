@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ovsTakt
 {
@@ -10,17 +6,16 @@ namespace ovsTakt
     {
         bool Stop = false; //if HLT => stop = true;
 
-
         public int[] Memory = new int[2048];
 
         int RA;
         int RD;
-        int RC;
+        int RI; // instruction register
 
-        int PC; //program counter
+        int PC; // program counter
 
-        int BR; //buffer register
-        int A;  //accumulator
+        int BR; // buffer register
+        int A;  // accumulator
 
         int C
         {
@@ -38,7 +33,7 @@ namespace ovsTakt
         {
             RA = 0;
             RD = 0;
-            RC = 0;
+            RI = 0;
 
             PC = 0;
 
@@ -59,44 +54,33 @@ namespace ovsTakt
             {
                 CycleInstructionFetch();
 
-                //Можно посмотреть, что получилось 
-
-                Console.WriteLine("PC: " + GetHex(3, PC) + "\t\tRA: " + GetHex(3, RA) + "\t\tRC: " + GetHex(4, RC) + "\tRD: " + GetHex(4, RD) + "\tA: " + GetHex(4, A) + "\t\tC: " + C);
-                //Console.ReadLine(); 
-
+                Console.WriteLine("PC: " + GetHex(3, PC) + "\t\tRA: " + GetHex(3, RA) + "\t\tRI: " + GetHex(4, RI) + "\tRD: " + GetHex(4, RD) + "\tA: " + GetHex(4, A) + "\t\tC: " + C);
             }
         }
 
         public string GetHex(int k, int N)
         {
-            string res = "";
+            char[] res = new char[k];
 
             for (int i = 0; i < k; i++)
             {
                 int t = N % 16;
                 N /= 16;
 
-                if(t < 10) res += t;
+                if(t < 10) res[i] = t.ToString()[0];
 
-                if(t == 10) res += "A";
-                if(t == 11) res += "B";
-                if(t == 12) res += "C";
-                if(t == 13) res += "D";
-                if(t == 14) res += "E";
-                if(t == 15) res += "F";
+                if(t == 10) res[i] = 'A';
+                if(t == 11) res[i] = 'B';
+                if(t == 12) res[i] = 'C';
+                if(t == 13) res[i] = 'D';
+                if(t == 14) res[i] = 'E';
+                if(t == 15) res[i] = 'F';
             }
 
-            string resRev = "";
-
-            for (int i = 0; i < k; i++) //Переворот (реверс) строки
-            {
-                resRev += res[k - 1 - i];
-            }
-
-            return resRev;
+            Array.Reverse(res);
+            return new string(res);
         }
 
-        //Цикл выборки команды + контракт
         void CycleInstructionFetch()
         {
             BR = PC; //01
@@ -108,27 +92,26 @@ namespace ovsTakt
             PC = BR; //04
 
             BR = RD; //05
-            RC = BR; //06
+            RI = BR; //06
 
-            //Определение типа команды
+            // Identifying the type of instruction
 
-            //Если безадресная => Перейти
-            if (Bit(15, RC) == 1 && Bit(14, RC) == 1 && Bit(13, RC) == 1 && Bit(12, RC) == 1)
+            // If there is no address => GoTo CycleExecutionAddresslessInstruction
+            if (Bit(15, RI) == 1 && Bit(14, RI) == 1 && Bit(13, RI) == 1 && Bit(12, RI) == 1)
             {
                 CycleExecutionAddresslessInstruction();
 
                 return;
             }
 
-            //Определение вида адресации
-            if (Bit(11, RC) == 1)
+            // Identifying the type of addressing
+            if (Bit(11, RI) == 1)
                 CycleSamplingOperandAddress();
 
             CycleExecutionAddressInstruction();
 
         }
 
-        //Цикл выборки адреса операнда
         void CycleSamplingOperandAddress()
         {
             BR = RD; //0D
@@ -137,43 +120,42 @@ namespace ovsTakt
             RA = BR; //0E
             RD = Memory[RA]; //0F
 
-            //Для индексных ячеек
+            // For index cells
             if (
-                Bit(3, RC) == 1 &&
-                Bit(4, RC) == 0 &&
-                Bit(5, RC) == 0 &&
-                Bit(6, RC) == 0 &&
-                Bit(7, RC) == 0 &&
-                Bit(8, RC) == 0 &&
-                Bit(9, RC) == 0 &&
-                Bit(10, RC) == 0)
+                Bit(3, RI) == 1 &&
+                Bit(4, RI) == 0 &&
+                Bit(5, RI) == 0 &&
+                Bit(6, RI) == 0 &&
+                Bit(7, RI) == 0 &&
+                Bit(8, RI) == 0 &&
+                Bit(9, RI) == 0 &&
+                Bit(10, RI) == 0)
             {
                 BR = RD+1; //18
-                BR %= (int)(1 << 17); //На всякий-всякий)
+                BR %= (int)(1 << 17);
 
                 RD = BR; //19
                 Memory[RA] = RD; //1A
-                BR = RD - 1; //1B ! - не защищенное место
+                BR = RD - 1; //1B ! - unprotected place!
                 RD = BR; //1
             }
 
         }
 
-        //Цикл исполнения адресных команд
-        //Предусловие: в RD лежит адрес операнда
+        // Precondition: RD contains the address of the operand
         void CycleExecutionAddressInstruction()
         {
-            //Декодирование адресных команд
+            // Decoding of address instructions
 
-            if (Bit(15, RC) == 1) //1D
+            if (Bit(15, RI) == 1) //1D
             {
-                //=> Команды перехода
+                // Jump instructions
 
-                if (Bit(14, RC) == 0) //2D
+                if (Bit(14, RI) == 0) //2D
                 {
-                    if (Bit(13, RC) == 0) //30
+                    if (Bit(13, RI) == 0) //30
                     {
-                        if (Bit(12, RC) == 0) //33
+                        if (Bit(12, RI) == 0) //33
                         {
                             BCS();
                         }
@@ -184,7 +166,7 @@ namespace ovsTakt
                     }
                     else //31
                     {
-                        if (Bit(12, RC) == 0)
+                        if (Bit(12, RI) == 0)
                         {
                             BMI();
                         }
@@ -196,7 +178,7 @@ namespace ovsTakt
                 }
                 else //2E
                 {
-                    if (Bit(12, RC) == 0)
+                    if (Bit(12, RI) == 0)
                     {
                         BReak();
                     }
@@ -208,19 +190,20 @@ namespace ovsTakt
             }
             else //1E
             {
-                //Остальные адр. команды
+                // Other address instructions
+
                 BR = RD;
-                BR %= (int)(1 << 11); //Младшие 11 бит
+                BR %= (int)(1 << 11); //Low-order 11 bits
 
                 RA = BR; //1F
 
-                if (Bit(14, RC) == 1) //20
+                if (Bit(14, RI) == 1) //20
                 {
                     RD = Memory[RA]; //27
 
-                    if (Bit(13, RC) == 0) //28
+                    if (Bit(13, RI) == 0) //28
                     {
-                        if (Bit(12, RC) == 0) //2B
+                        if (Bit(12, RI) == 0) //2B
                         {
                             ADD();
                         }
@@ -231,24 +214,24 @@ namespace ovsTakt
                     }
                     else //29
                     {
-                        if (Bit(12, RC) == 0)
+                        if (Bit(12, RI) == 0)
                         {
                             SUB();
                         }
                         else //2A
                         {
-                            //GOTO Р - А
-                            //Арифметическая команда 7###
+                            // GOTO Р - А
+                            // Arithmetic instruction 7###
                         }
                     }
                 }
                 else //21
                 {
-                    if (Bit(13, RC) == 0)
+                    if (Bit(13, RI) == 0)
                     {
                         RD = Memory[RA]; //24
 
-                        if (Bit(12, RC) == 0) //25
+                        if (Bit(12, RI) == 0) //25
                         {
                             ISZ();
                         }
@@ -259,7 +242,7 @@ namespace ovsTakt
                     }
                     else //22
                     {
-                        if (Bit(12, RC) == 0)
+                        if (Bit(12, RI) == 0)
                         {
                             JSR();
                         }
@@ -270,14 +253,14 @@ namespace ovsTakt
                     }
                 }
             }
-
-            //Исполнение адресных команд (см. методы ниже)
         }
+
+        //Execution of address instructions:
 
         void AND()
         {
             BR = RD & A; //35
-            BR %= (int)(1<<16); //Берем младшие 16 бит
+            BR %= (int)(1<<16); // Low-order 16 bits
 
             A = C * (int)(1 << 16) + BR; //36
         }
@@ -292,7 +275,7 @@ namespace ovsTakt
         void ADD()
         {
             BR = A + RD; //3C
-            BR %= (int)Math.Pow(2, 17); //Берем младшие 17 бит
+            BR %= (int)Math.Pow(2, 17); // Low-order 17 bits
 
             A = BR; //3D
         }
@@ -302,7 +285,7 @@ namespace ovsTakt
             if (Bit(0, C) == 0) ADD(); //3F
 
             BR = A + RD + 1; //40
-            BR %= (int)Math.Pow(2, 17); //Берем младшие 17 бит
+            BR %= (int)Math.Pow(2, 17); // Low-order 17 bits
 
             A = BR; //41
         }
@@ -310,7 +293,7 @@ namespace ovsTakt
         void SUB()
         {
             BR = A + COM(RD) + 1; //43
-            BR %= (int)Math.Pow(2, 17); //Берем младшие 17 бит
+            BR %= (int)Math.Pow(2, 17); // Low-order 17 bits
 
             A = BR; //44
         }
@@ -318,7 +301,7 @@ namespace ovsTakt
         void BReak()
         {
             BR = RD; //47
-            BR %= (int)Math.Pow(2, 11); //Берем младшие 11 бит
+            BR %= (int)Math.Pow(2, 11); // Low-order 11 bits
 
             PC = BR; //48 
         }
@@ -362,7 +345,7 @@ namespace ovsTakt
         void ISZ()
         {
             BR = RD + 1; //50
-            BR %= (int)(1 << 16); //Берем младшие 16 бит
+            BR %= (int)(1 << 16); // Low-order 16 bits
 
             RD = BR; //51
             Memory[RA] = RD; //52
@@ -377,34 +360,31 @@ namespace ovsTakt
         void JSR()
         {
             BR = RD + 1; //57
-            BR %= (int)(1<<16); //Берем младшие 16 бит 
+            BR %= (int)(1<<16); // Low-order 16 bits 
 
-            RC = BR; //58 (адрес следующей команды кладём в регистр команд (RC))
+            RI = BR; //58 (the address of the next instruction is put in the RI)
 
-            //Пишем адрес возврата
+            // Save the return address
             BR = PC; //59
             RD = BR; //5A
             Memory[RA] = RD; //5B
 
-            //Пишем адрес следующей команды
-            BR = RC;
+            // Save the address of the next command
+            BR = RI;
             PC = BR; //5C
             PC = BR % (int)(1<<11);
-
-
         }
 
-        //Цикл исполнения безадресных команд
         void CycleExecutionAddresslessInstruction()
         {
-            //Декодирование безадресных команд
-            if (Bit(11, RC) == 0) //5E
+            // Decoding of addressless instruction
+            if (Bit(11, RI) == 0) //5E
             {
-                if (Bit(10, RC) == 0) //61
+                if (Bit(10, RI) == 0) //61
                 {
-                    if (Bit(9, RC) == 0) //67
+                    if (Bit(9, RI) == 0) //67
                     {
-                        if (Bit(8, RC) == 0) //6A
+                        if (Bit(8, RI) == 0) //6A
                         {
                             HLT();
                         }
@@ -415,7 +395,7 @@ namespace ovsTakt
                     }
                     else
                     {
-                        if (Bit(8, RC) == 0) //68
+                        if (Bit(8, RI) == 0) //68
                         {
                             CLA();
                         }
@@ -427,9 +407,9 @@ namespace ovsTakt
                 }
                 else //62
                 {
-                    if (Bit(9, RC) == 0)
+                    if (Bit(9, RI) == 0)
                     {
-                        if (Bit(8, RC) == 0) //65
+                        if (Bit(8, RI) == 0) //65
                         {
                             CMA();
                         }
@@ -440,7 +420,7 @@ namespace ovsTakt
                     }
                     else //63
                     {
-                        if (Bit(8, RC) == 0)
+                        if (Bit(8, RI) == 0)
                         {
                             ROL();
                         }
@@ -453,18 +433,18 @@ namespace ovsTakt
             }
             else //5F
             {
-                if (Bit(10, RC) == 0) //5F
+                if (Bit(10, RI) == 0) //5F
                 {
-                    if (Bit(9, RC) == 0) //6C
+                    if (Bit(9, RI) == 0) //6C
                     {
-                        if (Bit(8, RC) == 0) //6F
+                        if (Bit(8, RI) == 0) //6F
                         {
                             INC();
                         }
                     }
                     else //6D
                     {
-                        if (Bit(8, RC) == 0)
+                        if (Bit(8, RI) == 0)
                         {
                             //EI
                         }
@@ -476,18 +456,18 @@ namespace ovsTakt
                 }
                 else //60
                 {
-                    //GOTO Р-Б
-                    //Безадресные команды FC## - FF##
+                    // GOTO Р-Б
+                    // Addressless instructions FC## - FF##
                 }
             }
-
-            //Исполнение безадресных команд (см. методы ниже)
         }
+
+        // Executing addressless instructions:
 
         void DEC()
         {
             BR = A + COM(0); //70
-            BR %= (int)(1<<17); //Берем младшие 17 бит
+            BR %= (int)(1<<17); // Low-order 17 bits
 
             A = BR; //71
         }
@@ -495,15 +475,15 @@ namespace ovsTakt
         void INC()
         {
             BR = A + 1; //73
-            BR %= (int)(1<<17); //Берем младшие 17 бит
+            BR %= (int)(1<<17); // Low-order 17 bits
 
             A = BR; //74
         }
 
         void CLA()
         {
-            //Очистка акумулятор
-            
+            // Clear buffer register
+
             BR = 0; //76
 
             //A = BR //77:
@@ -517,17 +497,17 @@ namespace ovsTakt
 
         void CMA()
         {
-            //Инверсия А
+            //Inversion А
 
             BR = COM(A); //7B
-            BR %= (int)(1 << 16); //На всякий
+            BR %= (int)(1 << 16);
 
             A = C * (int)(1 << 16) + BR; //7C
         }
 
         void CMC()
         {
-            //Инверсия бита C //7E
+            //Inversion C //7E
             if (C == 0)
                 C = 1;
             else
@@ -556,35 +536,31 @@ namespace ovsTakt
         {
             Stop = true;
         }
-        
-        //Не реализованы:
+
+        // Not implemented:
         /*
-         * NOP
-         * EI - разрешение прерывания
-         * DI - запрещение прерывания
+         * NOP - no operation
+         * EI - interrupt enable
+         * DI - interrupt disable
          * 
-         * В\В
-         * Всякие прерывания
-         * Пультовые операции
+         * I/O
+         * Any interruptions
+         * Remote controller operations
          */
 
-        //Подметоды:
-
-        //void SKP //54 - пока обошёлся без него
+        //Sub-methods:
 
         int COM(int n)
         {
-            //Only 16 (bit)
+            // Only 16 bit
             n %= (int)(1 << 16);
 
             return ((int)(1 << 16) - 1 - n) % (int)(1 << 16);
         }
 
-        //+контракт
         int Bit(int i, int n)
         {
             return (n >> i) % 2;
         }
-
     }
 }
